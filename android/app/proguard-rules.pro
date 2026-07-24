@@ -1,3 +1,0 @@
--keep class com.ryanheise.just_audio.** { *; }
--keep class com.ryanheise.audioservice.** { *; }
--dontwarn com.google.android.exoplayer2.**
