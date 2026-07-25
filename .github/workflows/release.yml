@@ -1,0 +1,60 @@
+cat << 'EOF'
+name: Build and Release APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Locate and unzip project
+        run: |
+          ZIPFILE=$(find . -iname *.zip | head -n 1)
+          echo Found zip: $ZIPFILE
+          unzip -o $ZIPFILE -d .
+          ls -la bm_music_streaming
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.24.0
+          cache: true
+
+      - name: Write local.properties
+        working-directory: bm_music_streaming/android
+        run: |
+          FLUTTER_ROOT_DIR=$(dirname $(dirname $(command -v flutter)))
+          echo sdk.dir=$ANDROID_HOME > local.properties
+          echo flutter.sdk=$FLUTTER_ROOT_DIR >> local.properties
+          cat local.properties
+
+      - name: Regenerate Gradle wrapper jar
+        working-directory: bm_music_streaming/android
+        run: |
+          gradle wrapper --gradle-version 8.6 --distribution-type all
+          chmod +x gradlew
+
+      - name: Flutter pub get
+        working-directory: bm_music_streaming
+        run: flutter pub get
+
+      - name: Build release APK
+        working-directory: bm_music_streaming
+        run: flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bm-music-streaming-apk
+          path: bm_music_streaming/build/app/outputs/flutter-apk/app-release.apk
+EOF
