@@ -1,3 +1,4 @@
+cat << 'EOF'
 name: Build & Release APK
 
 on:
@@ -13,15 +14,10 @@ jobs:
 
       - name: Locate and unzip project
         run: |
-          echo "Repo contents:"
-          find . -maxdepth 3
           ZIPFILE=$(find . -iname "*.zip" | head -n 1)
-          if [ -z "$ZIPFILE" ]; then
-            echo "No zip file found in repo!"
-            exit 1
-          fi
           echo "Found zip: $ZIPFILE"
           unzip -o "$ZIPFILE" -d .
+          ls -la bm_music_streaming
 
       - uses: actions/setup-java@v4
         with:
@@ -33,6 +29,14 @@ jobs:
           channel: 'stable'
           flutter-version: '3.24.0'
           cache: true
+
+      - name: Write local.properties
+        working-directory: bm_music_streaming/android
+        run: |
+          FLUTTER_ROOT_DIR="$(dirname "$(dirname "$(command -v flutter)")")"
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "flutter.sdk=$FLUTTER_ROOT_DIR" >> local.properties
+          cat local.properties
 
       - name: Regenerate Gradle wrapper jar
         working-directory: bm_music_streaming/android
@@ -52,3 +56,4 @@ jobs:
         with:
           name: bm-music-streaming-apk
           path: bm_music_streaming/build/app/outputs/flutter-apk/app-release.apk
+EOF
