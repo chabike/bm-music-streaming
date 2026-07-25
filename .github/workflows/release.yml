@@ -11,8 +11,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Unzip project
-        run: unzip -o bm_music_streaming.zip -d .
+      - name: Locate and unzip project
+        run: |
+          echo "Repo contents:"
+          find . -maxdepth 3
+          ZIPFILE=$(find . -iname "*.zip" | head -n 1)
+          if [ -z "$ZIPFILE" ]; then
+            echo "No zip file found in repo!"
+            exit 1
+          fi
+          echo "Found zip: $ZIPFILE"
+          unzip -o "$ZIPFILE" -d .
 
       - uses: actions/setup-java@v4
         with:
